@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { CreateTripDto } from "src/dto/createTrip.dto";
 import { BikeTrip } from "src/entities/bikeTrip.entity";
+import { dayTripStats } from "src/entities/dayTripsStats.entity";
 import { bikeTrips } from "./trips";
 
 @Injectable()
@@ -24,24 +25,19 @@ export class BikeTripService {
 
     getWeeklyStats(){
         let total_price = 0, total_distance = 0;
-        let bikeTripDate = new Date();             
-        const currentDate = new Date();  
-        let isTripInCurrentWeek : boolean;               
-        //const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }); 
-        const begginingOfWeekDate = currentDate.getDate() - currentDate.getDay();        
-        const endOfWeekDate = begginingOfWeekDate + 6;
-        
+        let bikeTripDate = new Date();           
+                         
+        //const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' });          
 
         this.bikeTrips.forEach(bikeTrip => {
 
-            bikeTripDate = this.convertDate(bikeTrip.date);   
-            isTripInCurrentWeek = bikeTripDate.getDate() <= endOfWeekDate 
-            && begginingOfWeekDate < bikeTripDate.getDate() ? true : false;
+            bikeTripDate = this.convertDate(bikeTrip.date);            
 
-            if(isTripInCurrentWeek)
+            if(this.isDateOnCurrentWeek(bikeTripDate))
             {
                 total_price += bikeTrip.price;
-                total_distance += bikeTrip.distance;
+                console.log(total_price, bikeTrip.id)
+                total_distance += bikeTrip.distance;                
             }           
         })
 
@@ -51,21 +47,44 @@ export class BikeTripService {
         }        
     }
 
-    getMonthlyStats(){
-        
+    getMonthlyStats() : dayTripStats[]{
+        const statsArray : dayTripStats[] = [];
+        const currentDate = new Date(); 
+        let bikeTripDate;
+
+        this.bikeTrips.forEach(bikeTrip => {
+            bikeTripDate = this.convertDate(bikeTrip.date);
+            
+            if(bikeTripDate.getMonth()-1 == currentDate.getMonth())
+                console.log(bikeTripDate)
+        })
+
+        return statsArray;
     }  
 
     convertDate(stringDate : string) : Date{
 
         let convertedDate = new Date();
         let splitedDate = stringDate.split('-');   
-
+       
         convertedDate.setDate(Number(splitedDate[2]))
-        convertedDate.setMonth(Number(splitedDate[1]))
+        convertedDate.setMonth(Number(splitedDate[1])-1)
         convertedDate.setFullYear(Number(splitedDate[0]))
-
+        console.log(convertedDate)
         return convertedDate;
     }
 
+    isDateOnCurrentWeek(bikeTipDate : Date) : boolean{  
+        const currentDate = new Date()        
+        const dayMilis = 1000*60*60*24;      
+     
+        const bikeTipDateTimestamp = Date.UTC(bikeTipDate.getFullYear(), bikeTipDate.getMonth(), bikeTipDate.getDate());
+        const startOfWeekTimestamp = Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate())
+         - (currentDate.getDay())*dayMilis - currentDate.getUTCHours() - currentDate.getUTCMinutes();
+        const endOfWeekTimestamp = startOfWeekTimestamp + dayMilis*7;
 
+        return bikeTipDateTimestamp > startOfWeekTimestamp 
+        && bikeTipDateTimestamp <  endOfWeekTimestamp ? true : false;
+    }
+   
 }

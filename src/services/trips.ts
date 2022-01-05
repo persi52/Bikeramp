@@ -5,7 +5,7 @@ export const bikeTrips = [
         destination_address : "Plac Europejski 4, Warszawa, Polska",
         distance : 10,
         price : 50.50,
-        date : '2022-1-21'
+        date : '2021-12-31'
     },
     {
         id : 2,
@@ -13,7 +13,7 @@ export const bikeTrips = [
         destination_address : "Plac Wernera 4, Warszawa, Polska",
         distance : 10,
         price : 60.50,
-        date : '2022-7-21'
+        date : '2022-1-04'
     },
     {
         id : 3,
@@ -21,7 +21,7 @@ export const bikeTrips = [
         destination_address : "Plac Skłodowskiej 4, Warszawa, Polska",
         distance : 10,
         price : 25.60,
-        date : '2022-1-09'
+        date : '2022-1-02'
     },
     {
         id : 4,
@@ -29,7 +29,7 @@ export const bikeTrips = [
         destination_address : "Plac Skłodowskiej 4, Warszawa, Polska",
         distance : 10,
         price : 25.50,
-        date : '2022-1-05'
+        date : '2023-5-05'
     },
     {
         id : 5,

@@ -4,10 +4,7 @@ import { BikeTrip } from "src/entities/bikeTrip.entity";
 import { bikeTrips } from "./trips";
 
 @Injectable()
-export class BikeTripService {
-    private months = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-    ];
+export class BikeTripService {    
 
     private bikeTrips = bikeTrips;
 
@@ -26,25 +23,49 @@ export class BikeTripService {
     }
 
     getWeeklyStats(){
-        let weeklyStats;
-        let a = [];        
-        let bikeTripDate; 
-        const currentDate = new Date();    
-        let rides = 0;    
-        //const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' });
+        let total_price = 0, total_distance = 0;
+        let bikeTripDate = new Date();             
+        const currentDate = new Date();  
+        let isTripInCurrentWeek : boolean;               
+        //const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' }); 
+        const begginingOfWeekDate = currentDate.getDate() - currentDate.getDay();        
+        const endOfWeekDate = begginingOfWeekDate + 6;
+        
 
         this.bikeTrips.forEach(bikeTrip => {
-            a = bikeTrip.date.split('-');
-           // bikeTripDate = new Date(a[0],a[1]-1,a[2]+1);
-            
-           if(a[1]-1==currentDate.getMonth())
-            rides++;
-           
+
+            bikeTripDate = this.convertDate(bikeTrip.date);   
+            isTripInCurrentWeek = bikeTripDate.getDate() <= endOfWeekDate 
+            && begginingOfWeekDate < bikeTripDate.getDate() ? true : false;
+
+            if(isTripInCurrentWeek)
+            {
+                total_price += bikeTrip.price;
+                total_distance += bikeTrip.distance;
+            }           
         })
-        console.log(rides)
+
+        return {
+            total_distance : total_distance.toString() + 'km',
+            total_price : total_price.toString() + 'PLN'           
+        }        
     }
 
     getMonthlyStats(){
+        
+    }  
 
+    convertDate(stringDate : string) : Date{
+
+        let convertedDate = new Date();
+        let splitedDate = stringDate.split('-');   
+
+        convertedDate.setDate(Number(splitedDate[2]))
+        convertedDate.setMonth(Number(splitedDate[1]))
+        convertedDate.setFullYear(Number(splitedDate[0]))
+
+        return convertedDate;
     }
+
+
 }

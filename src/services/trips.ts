@@ -4,7 +4,7 @@ export const bikeTrips = [
         start_address : "Plac Europejski 2, Warszawa, Polska",        
         destination_address : "Plac Europejski 4, Warszawa, Polska",
         distance : 10,
-        price : '50.50PLN',
+        price : 50.50,
         date : '2022-1-21'
     },
     {
@@ -12,7 +12,7 @@ export const bikeTrips = [
         start_address : "Plac Europejski 2, Warszawa, Polska",        
         destination_address : "Plac Wernera 4, Warszawa, Polska",
         distance : 10,
-        price : '60.50PLN',
+        price : 60.50,
         date : '2022-7-21'
     },
     {
@@ -20,23 +20,23 @@ export const bikeTrips = [
         start_address : "Plac Europejski 2, Warszawa, Polska",        
         destination_address : "Plac Skłodowskiej 4, Warszawa, Polska",
         distance : 10,
-        price : '25.50PLN',
-        date : '2022-1-21'
+        price : 25.60,
+        date : '2022-1-09'
     },
     {
         id : 4,
         start_address : "Plac Europejski 2, Warszawa, Polska",        
         destination_address : "Plac Skłodowskiej 4, Warszawa, Polska",
         distance : 10,
-        price : '25.50PLN',
-        date : '2022-1-21'
+        price : 25.50,
+        date : '2022-1-05'
     },
     {
         id : 5,
         start_address : "Plac Europejski 2, Warszawa, Polska",        
         destination_address : "Plac Skłodowskiej 4, Warszawa, Polska",
         distance : 10,
-        price : '25.50PLN',
+        price : 25.50,
         date : '2022-7-21'
     },
     {
@@ -44,7 +44,7 @@ export const bikeTrips = [
         start_address : "Plac Europejski 2, Warszawa, Polska",        
         destination_address : "Plac Skłodowskiej 4, Warszawa, Polska",
         distance : 10,
-        price : '25.50PLN',
+        price : 25.50,
         date : '2022-7-21'
     }
 ]

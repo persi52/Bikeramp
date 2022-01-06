@@ -1,7 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { ConsoleLogger, Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 import { CreateTripDto } from "src/dto/createTrip.dto";
 import { BikeTrip } from "src/entities/bikeTrip.entity";
 import { dayTripStats } from "src/entities/dayTripsStats.entity";
+import { dayTripStatsResp } from "src/entities/dayTripStatsResp.entity";
+import { Repository } from "typeorm";
 import { bikeTrips } from "./trips";
 
 @Injectable()
@@ -9,37 +12,42 @@ export class BikeTripService {
 
     private bikeTrips = bikeTrips;
 
-    getBikeTrips() : BikeTrip[]{
-        return this.bikeTrips;
+    constructor(   
+        @InjectRepository(BikeTrip)  
+        private readonly bikeTripsRepository: Repository<BikeTrip>
+    ){}
+
+    getBikeTrips() : Promise<BikeTrip[]>{
+        return this.bikeTripsRepository.find();
     }
 
-    createBikeTrip(body : CreateTripDto) : BikeTrip{
+    createBikeTrip(body : CreateTripDto) : Promise<BikeTrip>{
         let newBikeTrip;
 
-        newBikeTrip = { ... body}
-
-        bikeTrips.push(newBikeTrip);
-
+        newBikeTrip = { 
+            ... body,
+            distance : 10
+        }
+      
+        this.bikeTripsRepository.save(newBikeTrip)
         return newBikeTrip;
     }
 
-    getWeeklyStats(){
+    async getWeeklyStats(){       
+        const weekRange = this.getCurrentWeekRange();
+       
         let total_price = 0, total_distance = 0;
-        let bikeTripDate = new Date();           
-                         
-        //const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' });          
 
-        this.bikeTrips.forEach(bikeTrip => {
-
-            bikeTripDate = this.convertDate(bikeTrip.date);            
-
-            if(this.isDateOnCurrentWeek(bikeTripDate))
-            {
-                total_price += bikeTrip.price;
-                console.log(total_price, bikeTrip.id)
-                total_distance += bikeTrip.distance;                
-            }           
-        })
+        await this.bikeTripsRepository.query('SELECT * FROM bike_trips ' + 
+        'WHERE date > $1 AND date < $2',[weekRange.start,weekRange.end])
+        .then((results : BikeTrip[]) =>{
+           
+           for(let i=0;i<results.length;i++){
+               
+            total_price += results[i].price;              
+            total_distance += results[i].distance;       
+           }        
+        })       
 
         return {
             total_distance : total_distance.toString() + 'km',
@@ -47,44 +55,82 @@ export class BikeTripService {
         }        
     }
 
-    getMonthlyStats() : dayTripStats[]{
-        const statsArray : dayTripStats[] = [];
-        const currentDate = new Date(); 
-        let bikeTripDate;
+    async getMonthlyStats(){
+        const currentDate = new Date()
+        const currentMonthName = currentDate.toLocaleString('en-US', { month: 'long' });   
+        const dayTrips : dayTripStats[] = [];
 
-        this.bikeTrips.forEach(bikeTrip => {
-            bikeTripDate = this.convertDate(bikeTrip.date);
-            
-            if(bikeTripDate.getMonth()-1 == currentDate.getMonth())
-                console.log(bikeTripDate)
+        await this.bikeTripsRepository.query('SELECT * FROM bike_trips ' + 
+        'WHERE EXTRACT(MONTH FROM date) = $1',[currentDate.getMonth()+1])
+        .then(async (results : BikeTrip[]) => {
+           
+            let index : number;
+            for(let i=0;i<results.length;i++){
+               // console.log(dayTrips)
+
+                index = await dayTrips.findIndex(async bikeTripStats => {    
+                    console.log(bikeTripStats.day,results[i].date.getDate())                               
+                    return (results[i].date.getDate()==bikeTripStats.day)
+                })
+                console.log(index, "index")
+                if(index==-1) 
+                dayTrips.push({
+                    day : results[i].date.getDate(),
+                    total_distance : results[i].distance,
+                    total_day_price : results[i].price,
+                    total_day_rides : 1
+                })
+                else {
+                    dayTrips[index] = {
+                    ...dayTrips[index],
+                    total_distance : dayTrips[index].total_distance+=results[i].distance,
+                    total_day_price :  dayTrips[index].total_day_price+=results[i].price,    
+                    total_day_rides :  dayTrips[index].total_day_rides+=1  
+                }}
+            }
         })
 
-        return statsArray;
-    }  
+        return dayTrips.map(dayTrip => {
+            
+            return {
+                day : currentMonthName + ', ' + this.ordinal_suffix_of(dayTrip.day),
+                total_distance: dayTrip.total_distance + "km",       
+                avg_ride : dayTrip.total_distance/dayTrip.total_day_rides + "km",
+                avg_price : dayTrip.total_day_price/dayTrip.total_day_rides + "PLN"
+            }
+        })  
+    } 
 
-    convertDate(stringDate : string) : Date{
+    getCurrentWeekRange(){
+        const currentDate = new Date();        
+        const dayMilis = 1000*60*60*24;   
 
-        let convertedDate = new Date();
-        let splitedDate = stringDate.split('-');   
-       
-        convertedDate.setDate(Number(splitedDate[2]))
-        convertedDate.setMonth(Number(splitedDate[1])-1)
-        convertedDate.setFullYear(Number(splitedDate[0]))
-        console.log(convertedDate)
-        return convertedDate;
-    }
-
-    isDateOnCurrentWeek(bikeTipDate : Date) : boolean{  
-        const currentDate = new Date()        
-        const dayMilis = 1000*60*60*24;      
-     
-        const bikeTipDateTimestamp = Date.UTC(bikeTipDate.getFullYear(), bikeTipDate.getMonth(), bikeTipDate.getDate());
         const startOfWeekTimestamp = Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate())
-         - (currentDate.getDay())*dayMilis - currentDate.getUTCHours() - currentDate.getUTCMinutes();
+         - (currentDate.getDay())*dayMilis - currentDate.getUTCHours() - currentDate.getUTCMinutes()
+
         const endOfWeekTimestamp = startOfWeekTimestamp + dayMilis*7;
 
-        return bikeTipDateTimestamp > startOfWeekTimestamp 
-        && bikeTipDateTimestamp <  endOfWeekTimestamp ? true : false;
+        const startOfWeekDate = new Date(startOfWeekTimestamp);
+        const endOfWeekDate = new Date(endOfWeekTimestamp);
+
+        return{
+            start : startOfWeekDate,
+            end : endOfWeekDate
+        }
+    } 
+    ordinal_suffix_of(day : number) : string{
+        let j = day % 10,
+            k = day % 100;
+        if (j == 1 && k != 11) {
+            return day + "st";
+        }
+        if (j == 2 && k != 12) {
+            return day + "nd";
+        }
+        if (j == 3 && k != 13) {
+            return day + "rd";
+        }
+        return day + "th";
     }
    
 }

@@ -1,10 +1,10 @@
 export class dayTripStats{   
 
-    constructor(
-        public day: string,
-        public total_distance: string,
-        public avg_ride : string,
-        public avg_price : string
-    ) {}   
+   
+        public day : number;
+        public total_distance : number;       
+        public total_day_rides : number;
+        public total_day_price : number;
+     
     
 }

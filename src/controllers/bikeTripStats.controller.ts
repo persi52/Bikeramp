@@ -3,7 +3,7 @@ import { CreateTripDto } from "src/dto/createTrip.dto";
 import { BikeTrip } from "src/entities/bikeTrip.entity";
 import { BikeTripService } from "src/services/bikeTrip.service";
 
-@Controller('api/stats')
+@Controller('/stats')
 export class BikeTripStatsController{
 
     constructor(private readonly bikeTripService : BikeTripService){}

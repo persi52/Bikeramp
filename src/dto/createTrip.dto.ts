@@ -1,11 +1,11 @@
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, Length } from "class-validator";
 
 export class CreateTripDto{
 
+    @IsNotEmpty()@Length(1,100)
+    start_address : string;
     @IsNotEmpty()
-    start_adress : string;
-    @IsNotEmpty()
-    destination_adress : string;    
+    destination_address : string;    
     @IsNotEmpty()
     price : string;
     @IsNotEmpty()

@@ -11,7 +11,7 @@ export class BikeTrip{
         public destination_address : string;
         @Column({type : 'float'})
         public price : number;
-        @Column()
+        @Column({type : 'float'})
         public distance : number;
         @CreateDateColumn({type: 'timestamptz'})
         public date : Date;  

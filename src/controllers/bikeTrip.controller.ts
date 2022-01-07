@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Observable } from "rxjs";
 import { CreateTripDto } from "src/dto/createTrip.dto";
 import { BikeTrip } from "src/entities/bikeTrip.entity";
 import { BikeTripService } from "src/services/bikeTrip.service";
@@ -9,8 +10,7 @@ export class BikeTripController{
     constructor(private readonly bikeTripService : BikeTripService){}
 
     @Get()
-    getBikeTrips() : Promise<BikeTrip[]>{       
-
+    getBikeTrips(){       
         return this.bikeTripService.getBikeTrips();
     }
     @UsePipes(new ValidationPipe({whitelist: true}))

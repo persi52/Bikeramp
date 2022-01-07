@@ -1,7 +1,7 @@
 import { BikeTrip } from "src/entities/bikeTrip.entity";
 import { BikeTripController } from "src/controllers/bikeTrip.controller";
 import { BikeTripService } from "src/services/bikeTrip.service";
-import { Module } from "@nestjs/common";
+import {  Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { BikeTripStatsController } from "src/controllers/bikeTripStats.controller";
 

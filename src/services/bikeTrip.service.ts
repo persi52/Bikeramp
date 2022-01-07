@@ -6,33 +6,39 @@ import { dayTripStats } from "src/entities/dayTripsStats.entity";
 import { dayTripStatsResp } from "src/entities/dayTripStatsResp.entity";
 import { Repository } from "typeorm";
 import { bikeTrips } from "./trips";
-
+import { HttpService } from "@nestjs/axios";
+import fetch from 'cross-fetch';
+import { distanceCalculator } from "src/location/distanceCalculator";
 @Injectable()
 export class BikeTripService {    
 
-    private bikeTrips = bikeTrips;
+    private readonly distanceCalculator  = new distanceCalculator();
 
     constructor(   
         @InjectRepository(BikeTrip)  
-        private readonly bikeTripsRepository: Repository<BikeTrip>
+        private readonly bikeTripsRepository: Repository<BikeTrip>      
     ){}
 
-    getBikeTrips() : Promise<BikeTrip[]>{
-        return this.bikeTripsRepository.find();
+    async getBikeTrips(){
+       const address = 'Plac Europejski 2, Warszawa, Polska'
+       const address2 = 'Ulica Szafirowa 12, Lublin, Polska'
+       return this.bikeTripsRepository.find();
+     
     }
 
-    createBikeTrip(body : CreateTripDto) : Promise<BikeTrip>{
+    async createBikeTrip(body : CreateTripDto) : Promise<BikeTrip>{
         let newBikeTrip;
-
+        
         newBikeTrip = { 
             ... body,
-            distance : 10
+            distance : await this.distanceCalculator
+            .getDistance(body.start_address,body.destination_address)
         }
       
         this.bikeTripsRepository.save(newBikeTrip)
-        return newBikeTrip;
+        return newBikeTrip;       
     }
-
+   
     async getWeeklyStats(){       
         const weekRange = this.getCurrentWeekRange();
        
@@ -68,10 +74,11 @@ export class BikeTripService {
             for(let i=0;i<results.length;i++){
                // console.log(dayTrips)
 
-                index = await dayTrips.findIndex(async bikeTripStats => {    
+                index = await dayTrips.findIndex(async bikeTripStats => {     //tu index sie nie chce poprawnie przypisywac
                     console.log(bikeTripStats.day,results[i].date.getDate())                               
                     return (results[i].date.getDate()==bikeTripStats.day)
                 })
+
                 console.log(index, "index")
                 if(index==-1) 
                 dayTrips.push({
@@ -131,6 +138,6 @@ export class BikeTripService {
             return day + "rd";
         }
         return day + "th";
-    }
-   
+    }  
+    
 }

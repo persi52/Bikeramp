@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BikeTrip } from 'src/entities/bikeTrip.entity';
 import { ConfigModule } from '@nestjs/config';
 import { BikeTripModule } from './bikeTrip.module';
+import { distanceCalculator } from 'src/location/distanceCalculator';
 
 @Module({
   imports: [     

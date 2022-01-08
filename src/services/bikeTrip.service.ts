@@ -1,14 +1,11 @@
-import { ConsoleLogger, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { CreateTripDto } from "src/dto/createTrip.dto";
 import { BikeTrip } from "src/entities/bikeTrip.entity";
 import { dayTripStats } from "src/entities/dayTripsStats.entity";
-import { dayTripStatsResp } from "src/entities/dayTripStatsResp.entity";
 import { Repository } from "typeorm";
-import { bikeTrips } from "./trips";
-import { HttpService } from "@nestjs/axios";
-import fetch from 'cross-fetch';
 import { distanceCalculator } from "src/location/distanceCalculator";
+import {_} from "lodash"
 @Injectable()
 export class BikeTripService {    
 
@@ -19,24 +16,26 @@ export class BikeTripService {
         private readonly bikeTripsRepository: Repository<BikeTrip>      
     ){}
 
-    async getBikeTrips(){
-       const address = 'Plac Europejski 2, Warszawa, Polska'
-       const address2 = 'Ulica Szafirowa 12, Lublin, Polska'
-       return this.bikeTripsRepository.find();
-     
+    async getBikeTrips(){   
+      const response = (await this.bikeTripsRepository.find()).map(bikeTrip => {         
+        return this.formatTrip(bikeTrip);
+      });
+      return response;  
     }
 
-    async createBikeTrip(body : CreateTripDto) : Promise<BikeTrip>{
+    async createBikeTrip(body : CreateTripDto){
         let newBikeTrip;
         
         newBikeTrip = { 
             ... body,
+            price : Math.round((body.price + Number.EPSILON) * 100) / 100,
             distance : await this.distanceCalculator
             .getDistance(body.start_address,body.destination_address)
         }
       
         this.bikeTripsRepository.save(newBikeTrip)
-        return newBikeTrip;       
+
+        return this.formatTrip(newBikeTrip);       
     }
    
     async getWeeklyStats(){       
@@ -56,8 +55,8 @@ export class BikeTripService {
         })       
 
         return {
-            total_distance : total_distance.toString() + 'km',
-            total_price : total_price.toString() + 'PLN'           
+            total_distance : total_distance.toFixed(2).toString() + 'km',
+            total_price : total_price.toFixed(2).toString() + 'PLN'           
         }        
     }
 
@@ -67,19 +66,17 @@ export class BikeTripService {
         const dayTrips : dayTripStats[] = [];
 
         await this.bikeTripsRepository.query('SELECT * FROM bike_trips ' + 
-        'WHERE EXTRACT(MONTH FROM date) = $1',[currentDate.getMonth()+1])
+        'WHERE EXTRACT(MONTH FROM date) = $1 ORDER BY EXTRACT(DAY FROM date)',[currentDate.getMonth()+1])
         .then(async (results : BikeTrip[]) => {
            
             let index : number;
             for(let i=0;i<results.length;i++){
-               // console.log(dayTrips)
-
-                index = await dayTrips.findIndex(async bikeTripStats => {     //tu index sie nie chce poprawnie przypisywac
-                    console.log(bikeTripStats.day,results[i].date.getDate())                               
-                    return (results[i].date.getDate()==bikeTripStats.day)
-                })
-
                 console.log(index, "index")
+
+                index = await _.findIndex(dayTrips, (dayTripStats) => {
+                    return dayTripStats.day == results[i].date.getDate();
+                }, 0);             
+            
                 if(index==-1) 
                 dayTrips.push({
                     day : results[i].date.getDate(),
@@ -97,18 +94,17 @@ export class BikeTripService {
             }
         })
 
-        return dayTrips.map(dayTrip => {
-            
+        return dayTrips.map(dayTrip => {               //mapping dayTripStats array to proper response
             return {
                 day : currentMonthName + ', ' + this.ordinal_suffix_of(dayTrip.day),
-                total_distance: dayTrip.total_distance + "km",       
-                avg_ride : dayTrip.total_distance/dayTrip.total_day_rides + "km",
-                avg_price : dayTrip.total_day_price/dayTrip.total_day_rides + "PLN"
+                total_distance: dayTrip.total_distance.toFixed(2) + "km",       
+                avg_ride : (dayTrip.total_distance/dayTrip.total_day_rides).toFixed(2) + "km",
+                avg_price : (dayTrip.total_day_price/dayTrip.total_day_rides).toFixed(2) + "PLN"
             }
         })  
     } 
-
-    getCurrentWeekRange(){
+    
+    getCurrentWeekRange(){    //function calculating start and end of current week using timestamps
         const currentDate = new Date();        
         const dayMilis = 1000*60*60*24;   
 
@@ -125,7 +121,16 @@ export class BikeTripService {
             end : endOfWeekDate
         }
     } 
-    ordinal_suffix_of(day : number) : string{
+    
+    formatTrip(bikeTrip : BikeTrip){   //function formatting bikeTrips output to user-friendly
+        return {
+            ...bikeTrip,
+            price : bikeTrip.price.toFixed(2) + "PLN",
+            distance : bikeTrip.distance.toFixed(2) + "km"
+        }
+    }   
+
+    ordinal_suffix_of(day : number) : string{ //function appending proper suffix to number 
         let j = day % 10,
             k = day % 100;
         if (j == 1 && k != 11) {

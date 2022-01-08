@@ -22,7 +22,7 @@
 
 ## Description
 
-Bike trip API, that allows bike couriers to gather information about deliveries, calculate distances between given addresses and calculate delivery statistics.
+Bike trip API that allows bike couriers to gather information about deliveries, calculate distances between given addresses and calculate delivery statistics.
 System built using NestJS framework with Typescript and PostgreSQL.
 API runs locally, database is hosted on Heroku.
 
